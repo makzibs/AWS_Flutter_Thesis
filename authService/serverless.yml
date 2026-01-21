@@ -1,0 +1,59 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: makzibs
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: authService
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: eu-north-1
+  # Uncomment to easily set up a custom domain. Read the docs for more details:
+  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
+  # domain: api.example.com
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource:
+        - arn:aws:dynamodb:eu-north-1:387056640382:table/Users
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Users # name of the table were users will be stored
+        BillingMode: PAY_PER_REQUEST #Automatically scales read/write capcity base on usage
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S # String
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH # Indicates it's the partition key
+
+
+functions:
+  signUp:
+    handler: handlers/signUp.signUp
+    events:
+      -  httpApi:
+           path: /sign-up
+           method: post
+  confirmSignUp:
+    handler: handlers/confirmSignUp.confirmSignUp
+    events:
+      -  httpApi:
+           path: /confirm-sign-up
+           method: post  
+  signIn:       
+    handler: handlers/signIn.signIn
+    events:
+      -  httpApi:
+           path: /sign-in
+           method: post
+  signOut:         
+    handler: handlers/signOut.signOut
+    events:
+      -  httpApi:
+           path: /sign-out
+           method: post
