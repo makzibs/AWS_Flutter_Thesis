@@ -28,7 +28,7 @@ class AuthController {
       );
       
       if (response.statusCode == 200) {
-        Navigator.push(context, MaterialPageRoute(
+        await Navigator.push(context, MaterialPageRoute(
           builder: (context) {
             return ConfirmSignUpScreen(email: email);
           },
@@ -68,7 +68,7 @@ class AuthController {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account verified successfully! Please sign in.')),
         );
-        Navigator.pushAndRemoveUntil(
+        await Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const SignInPage()),
           (route) => false,
@@ -99,7 +99,7 @@ class AuthController {
           ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Signed in successfully')),
         );
-        Navigator.push(
+        await Navigator.push(
          
           context, MaterialPageRoute(builder: (context) {
             return const MyHomePage();

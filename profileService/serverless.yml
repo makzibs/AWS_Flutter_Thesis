@@ -1,0 +1,52 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: makzibs
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: profileService
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: eu-north-1 # You can choose the same or a different region
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource:
+        - !GetAtt UserProfilesTable.Arn
+
+resources:
+  Resources:
+    UserProfilesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserProfiles
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S # String
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH # Partition key
+
+functions:
+  createProfile:
+    handler: handlers/profile.create
+    events:
+      - httpApi:
+          path: /profile
+          method: post
+  getProfile:
+    handler: handlers/profile.get
+    events:
+      - httpApi:
+          path: /profile/{userId}
+          method: get
+  updateProfile:
+    handler: handlers/profile.update
+    events:
+      - httpApi:
+          path: /profile/{userId}
+          method: put
