@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18), // Increased padding
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 40), // Added horizontal padding, // Increased padding
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

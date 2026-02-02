@@ -12,7 +12,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   // Dummy data for the user profile
   final String _userName = 'Anil Khanal';
-  final String _userBio = 'Flutter developer and AWS enthusiast. Love to build cool things and explore new technologies. This is a sample bio to fill up some space.';
+  final String _userBio = 'Hi! This is Anil';
   final String _profilePictureUrl = 'https://p7.hiclipart.com/preview/980/37/223/computer-icons-user-profile-avatar-person-png-clipart.jpg';
 
   // Dummy data for the image carousel
@@ -52,6 +52,8 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 24),
+            ElevatedButton(onPressed: () {}, child: const Text('Edit Profile')),
+            const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 16),
             Text(
@@ -86,6 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 24),
+            ElevatedButton(onPressed: () {}, child: const Text('Upload New Picture')),
           ],
         ),
       ),
