@@ -8,6 +8,16 @@
       "name": "aws",
       "runtime": "nodejs22.x",
       "region": "eu-north-1",
+      "httpApi": {
+        "authorizers": {
+          "cognitoJwt": {
+            "type": "jwt",
+            "identitySource": "$request.header.Authorization",
+            "issuerUrl": "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_ae4S1L6Tw",
+            "audience": "4p46vv30o2nkal2g06d2dvde5n"
+          }
+        }
+      },
       "iamRoleStatements": [
         {
           "Effect": "Allow",
@@ -136,7 +146,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
-                "S3Key": "serverless/profileService/dev/1770067406634-2026-02-02T21:23:26.634Z/profileService.zip"
+                "S3Key": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z/profileService.zip"
               },
               "Handler": "handlers/profile.create",
               "Runtime": "nodejs22.x",
@@ -159,7 +169,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
-                "S3Key": "serverless/profileService/dev/1770067406634-2026-02-02T21:23:26.634Z/profileService.zip"
+                "S3Key": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z/profileService.zip"
               },
               "Handler": "handlers/profile.get",
               "Runtime": "nodejs22.x",
@@ -182,7 +192,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
-                "S3Key": "serverless/profileService/dev/1770067406634-2026-02-02T21:23:26.634Z/profileService.zip"
+                "S3Key": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z/profileService.zip"
               },
               "Handler": "handlers/profile.update",
               "Runtime": "nodejs22.x",
@@ -200,34 +210,34 @@
               "UpdateProfileLogGroup"
             ]
           },
-          "CreateProfileLambdaVersionW7Z5LGvEHg32n2uANgHQTnuIPBB98ODnDKcLO6gwl6A": {
+          "CreateProfileLambdaVersionY8zNZio8ciMIrwsz3xbOIWzI8RwaLMXwyj88yCwYQ8": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateProfileLambdaFunction"
               },
-              "CodeSha256": "X6U6fCgzdoxZrMDgEa7s0i+TZ9v/Ueub9TsYM63uxeo="
+              "CodeSha256": "lSokkAunK3lIy99sztuVEo+9VMyNABn2KuMuKoRa16M="
             }
           },
-          "GetProfileLambdaVersionuncZRVr2ODJElt1PzE4gvFc1lF82mszy30w7RKM": {
+          "GetProfileLambdaVersionopzFEvKJisbB63a32ZWJ2oSAZ50lGJ2KlUPxSbHFUQ": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetProfileLambdaFunction"
               },
-              "CodeSha256": "X6U6fCgzdoxZrMDgEa7s0i+TZ9v/Ueub9TsYM63uxeo="
+              "CodeSha256": "lSokkAunK3lIy99sztuVEo+9VMyNABn2KuMuKoRa16M="
             }
           },
-          "UpdateProfileLambdaVersionIJyfCSiquIqHSV1j5aPdHvbbolxFkf8NjX7IlVdM": {
+          "UpdateProfileLambdaVersion6EgROys3PMMA58V0Ut6GhZIy02hY5aWGvbszgw6yznE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "UpdateProfileLambdaFunction"
               },
-              "CodeSha256": "X6U6fCgzdoxZrMDgEa7s0i+TZ9v/Ueub9TsYM63uxeo="
+              "CodeSha256": "lSokkAunK3lIy99sztuVEo+9VMyNABn2KuMuKoRa16M="
             }
           },
           "HttpApi": {
@@ -247,6 +257,25 @@
               "AutoDeploy": true,
               "DefaultRouteSettings": {
                 "DetailedMetricsEnabled": false
+              }
+            }
+          },
+          "HttpApiAuthorizerCognitoJwt": {
+            "Type": "AWS::ApiGatewayV2::Authorizer",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "Name": "cognitoJwt",
+              "IdentitySource": [
+                "$request.header.Authorization"
+              ],
+              "AuthorizerType": "JWT",
+              "JwtConfiguration": {
+                "Audience": [
+                  "4p46vv30o2nkal2g06d2dvde5n"
+                ],
+                "Issuer": "https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_ae4S1L6Tw"
               }
             }
           },
@@ -318,6 +347,10 @@
                     }
                   ]
                 ]
+              },
+              "AuthorizationType": "JWT",
+              "AuthorizerId": {
+                "Ref": "HttpApiAuthorizerCognitoJwt"
               }
             },
             "DependsOn": "HttpApiIntegrationCreateProfile"
@@ -373,13 +406,13 @@
               "TimeoutInMillis": 30000
             }
           },
-          "HttpApiRouteGetProfileUseridVar": {
+          "HttpApiRouteGetProfile": {
             "Type": "AWS::ApiGatewayV2::Route",
             "Properties": {
               "ApiId": {
                 "Ref": "HttpApi"
               },
-              "RouteKey": "GET /profile/{userId}",
+              "RouteKey": "GET /profile",
               "Target": {
                 "Fn::Join": [
                   "/",
@@ -390,6 +423,10 @@
                     }
                   ]
                 ]
+              },
+              "AuthorizationType": "JWT",
+              "AuthorizerId": {
+                "Ref": "HttpApiAuthorizerCognitoJwt"
               }
             },
             "DependsOn": "HttpApiIntegrationGetProfile"
@@ -445,13 +482,13 @@
               "TimeoutInMillis": 30000
             }
           },
-          "HttpApiRoutePutProfileUseridVar": {
+          "HttpApiRoutePutProfile": {
             "Type": "AWS::ApiGatewayV2::Route",
             "Properties": {
               "ApiId": {
                 "Ref": "HttpApi"
               },
-              "RouteKey": "PUT /profile/{userId}",
+              "RouteKey": "PUT /profile",
               "Target": {
                 "Fn::Join": [
                   "/",
@@ -462,6 +499,10 @@
                     }
                   ]
                 ]
+              },
+              "AuthorizationType": "JWT",
+              "AuthorizerId": {
+                "Ref": "HttpApiAuthorizerCognitoJwt"
               }
             },
             "DependsOn": "HttpApiIntegrationUpdateProfile"
@@ -496,7 +537,7 @@
           "CreateProfileLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateProfileLambdaVersionW7Z5LGvEHg32n2uANgHQTnuIPBB98ODnDKcLO6gwl6A"
+              "Ref": "CreateProfileLambdaVersionY8zNZio8ciMIrwsz3xbOIWzI8RwaLMXwyj88yCwYQ8"
             },
             "Export": {
               "Name": "sls-profileService-dev-CreateProfileLambdaFunctionQualifiedArn"
@@ -505,7 +546,7 @@
           "GetProfileLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetProfileLambdaVersionuncZRVr2ODJElt1PzE4gvFc1lF82mszy30w7RKM"
+              "Ref": "GetProfileLambdaVersionopzFEvKJisbB63a32ZWJ2oSAZ50lGJ2KlUPxSbHFUQ"
             },
             "Export": {
               "Name": "sls-profileService-dev-GetProfileLambdaFunctionQualifiedArn"
@@ -514,7 +555,7 @@
           "UpdateProfileLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "UpdateProfileLambdaVersionIJyfCSiquIqHSV1j5aPdHvbbolxFkf8NjX7IlVdM"
+              "Ref": "UpdateProfileLambdaVersion6EgROys3PMMA58V0Ut6GhZIy02hY5aWGvbszgw6yznE"
             },
             "Export": {
               "Name": "sls-profileService-dev-UpdateProfileLambdaFunctionQualifiedArn"
@@ -566,7 +607,10 @@
           {
             "httpApi": {
               "path": "/profile",
-              "method": "post"
+              "method": "post",
+              "authorizer": {
+                "name": "cognitoJwt"
+              }
             },
             "resolvedMethod": "POST",
             "resolvedPath": "/profile"
@@ -578,18 +622,21 @@
         "timeout": 6,
         "runtime": "nodejs22.x",
         "vpc": {},
-        "versionLogicalId": "CreateProfileLambdaVersionW7Z5LGvEHg32n2uANgHQTnuIPBB98ODnDKcLO6gwl6A"
+        "versionLogicalId": "CreateProfileLambdaVersionY8zNZio8ciMIrwsz3xbOIWzI8RwaLMXwyj88yCwYQ8"
       },
       "getProfile": {
         "handler": "handlers/profile.get",
         "events": [
           {
             "httpApi": {
-              "path": "/profile/{userId}",
-              "method": "get"
+              "path": "/profile",
+              "method": "get",
+              "authorizer": {
+                "name": "cognitoJwt"
+              }
             },
             "resolvedMethod": "GET",
-            "resolvedPath": "/profile/{userId}"
+            "resolvedPath": "/profile"
           }
         ],
         "name": "profileService-dev-getProfile",
@@ -598,18 +645,21 @@
         "timeout": 6,
         "runtime": "nodejs22.x",
         "vpc": {},
-        "versionLogicalId": "GetProfileLambdaVersionuncZRVr2ODJElt1PzE4gvFc1lF82mszy30w7RKM"
+        "versionLogicalId": "GetProfileLambdaVersionopzFEvKJisbB63a32ZWJ2oSAZ50lGJ2KlUPxSbHFUQ"
       },
       "updateProfile": {
         "handler": "handlers/profile.update",
         "events": [
           {
             "httpApi": {
-              "path": "/profile/{userId}",
-              "method": "put"
+              "path": "/profile",
+              "method": "put",
+              "authorizer": {
+                "name": "cognitoJwt"
+              }
             },
             "resolvedMethod": "PUT",
-            "resolvedPath": "/profile/{userId}"
+            "resolvedPath": "/profile"
           }
         ],
         "name": "profileService-dev-updateProfile",
@@ -618,7 +668,7 @@
         "timeout": 6,
         "runtime": "nodejs22.x",
         "vpc": {},
-        "versionLogicalId": "UpdateProfileLambdaVersionIJyfCSiquIqHSV1j5aPdHvbbolxFkf8NjX7IlVdM"
+        "versionLogicalId": "UpdateProfileLambdaVersion6EgROys3PMMA58V0Ut6GhZIy02hY5aWGvbszgw6yznE"
       }
     },
     "resources": {
@@ -667,7 +717,7 @@
     "artifact": "/Users/makzibsanil/Desktop/FlutterProjects/SignupDemo/profileService/.serverless/profileService.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/profileService/dev/1770067406634-2026-02-02T21:23:26.634Z",
+    "artifactDirectoryName": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z",
     "artifact": "profileService.zip"
   }
 }

@@ -7,6 +7,14 @@ provider:
   name: aws
   runtime: nodejs22.x
   region: eu-north-1 # You can choose the same or a different region
+  httpApi:
+    authorizers:
+      cognitoJwt:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.eu-north-1.amazonaws.com/eu-north-1_ae4S1L6Tw
+        audience:
+          - 4p46vv30o2nkal2g06d2dvde5n
 
   iamRoleStatements:
     - Effect: Allow
@@ -16,6 +24,7 @@ provider:
         - dynamodb:UpdateItem
       Resource:
         - !GetAtt UserProfilesTable.Arn
+  
 
 resources:
   Resources:
@@ -38,15 +47,21 @@ functions:
       - httpApi:
           path: /profile
           method: post
+          authorizer:
+            name: cognitoJwt
   getProfile:
     handler: handlers/profile.get
     events:
       - httpApi:
-          path: /profile/{userId}
+          path: /profile
           method: get
+          authorizer:
+            name: cognitoJwt
   updateProfile:
     handler: handlers/profile.update
     events:
       - httpApi:
-          path: /profile/{userId}
+          path: /profile
           method: put
+          authorizer:
+            name: cognitoJwt
