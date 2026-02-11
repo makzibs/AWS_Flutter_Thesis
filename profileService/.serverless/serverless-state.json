@@ -24,7 +24,9 @@
           "Action": [
             "dynamodb:PutItem",
             "dynamodb:GetItem",
-            "dynamodb:UpdateItem"
+            "dynamodb:UpdateItem",
+            "s3:PutObject",
+            "s3:GetObject"
           ],
           "Resource": [
             {
@@ -32,7 +34,8 @@
                 "UserProfilesTable",
                 "Arn"
               ]
-            }
+            },
+            "arn:aws:s3:::myapp-user-media-eu-north-1/*"
           ]
         }
       ],
@@ -58,6 +61,12 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/profileService-dev-updateProfile"
+            }
+          },
+          "GetUploadUrlLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/profileService-dev-getUploadUrl"
             }
           },
           "IamRoleLambdaExecution": {
@@ -146,7 +155,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
-                "S3Key": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z/profileService.zip"
+                "S3Key": "serverless/profileService/dev/1770834731491-2026-02-11T18:32:11.491Z/profileService.zip"
               },
               "Handler": "handlers/profile.create",
               "Runtime": "nodejs22.x",
@@ -169,7 +178,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
-                "S3Key": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z/profileService.zip"
+                "S3Key": "serverless/profileService/dev/1770834731491-2026-02-11T18:32:11.491Z/profileService.zip"
               },
               "Handler": "handlers/profile.get",
               "Runtime": "nodejs22.x",
@@ -192,7 +201,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
-                "S3Key": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z/profileService.zip"
+                "S3Key": "serverless/profileService/dev/1770834731491-2026-02-11T18:32:11.491Z/profileService.zip"
               },
               "Handler": "handlers/profile.update",
               "Runtime": "nodejs22.x",
@@ -210,34 +219,72 @@
               "UpdateProfileLogGroup"
             ]
           },
-          "CreateProfileLambdaVersionY8zNZio8ciMIrwsz3xbOIWzI8RwaLMXwyj88yCwYQ8": {
+          "GetUploadUrlLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-eu-north-1-8d276e56-31d3",
+                "S3Key": "serverless/profileService/dev/1770834731491-2026-02-11T18:32:11.491Z/profileService.zip"
+              },
+              "Handler": "handlers/profile.getUploadUrl",
+              "Runtime": "nodejs22.x",
+              "FunctionName": "profileService-dev-getUploadUrl",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "BUCKET_NAME": "myapp-user-media-eu-north-1"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetUploadUrlLogGroup"
+            ]
+          },
+          "CreateProfileLambdaVersionL5ocC3bYu95Ck4t4VG7K93szrKPPJjFIjNuRU1jbNyk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateProfileLambdaFunction"
               },
-              "CodeSha256": "lSokkAunK3lIy99sztuVEo+9VMyNABn2KuMuKoRa16M="
+              "CodeSha256": "b1GXMblynzdhhQxGnzdF0HI7+nbadWCuje+XbzD3UNk="
             }
           },
-          "GetProfileLambdaVersionopzFEvKJisbB63a32ZWJ2oSAZ50lGJ2KlUPxSbHFUQ": {
+          "GetProfileLambdaVersionHBOyswfJCAGJwLcjPmellOibiSo1oR3N73LcbBizFgw": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetProfileLambdaFunction"
               },
-              "CodeSha256": "lSokkAunK3lIy99sztuVEo+9VMyNABn2KuMuKoRa16M="
+              "CodeSha256": "b1GXMblynzdhhQxGnzdF0HI7+nbadWCuje+XbzD3UNk="
             }
           },
-          "UpdateProfileLambdaVersion6EgROys3PMMA58V0Ut6GhZIy02hY5aWGvbszgw6yznE": {
+          "UpdateProfileLambdaVersionQL2DvYYBzqmxT600cMvP1eGHSlJ1cT3SDSkqpEXPs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "UpdateProfileLambdaFunction"
               },
-              "CodeSha256": "lSokkAunK3lIy99sztuVEo+9VMyNABn2KuMuKoRa16M="
+              "CodeSha256": "b1GXMblynzdhhQxGnzdF0HI7+nbadWCuje+XbzD3UNk="
+            }
+          },
+          "GetUploadUrlLambdaVersion2OxbnPEmBAjj0nU8VPtxkIj19b4xcGJS2bY2MkjyRz0": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetUploadUrlLambdaFunction"
+              },
+              "CodeSha256": "b1GXMblynzdhhQxGnzdF0HI7+nbadWCuje+XbzD3UNk="
             }
           },
           "HttpApi": {
@@ -507,6 +554,82 @@
             },
             "DependsOn": "HttpApiIntegrationUpdateProfile"
           },
+          "GetUploadUrlLambdaPermissionHttpApi": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetUploadUrlLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "HttpApi"
+                    },
+                    "/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "HttpApiIntegrationGetUploadUrl": {
+            "Type": "AWS::ApiGatewayV2::Integration",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "IntegrationType": "AWS_PROXY",
+              "IntegrationUri": {
+                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"GetUploadUrlLambdaPermissionHttpApi\"][\"Properties\"][\"FunctionName\"]"
+              },
+              "PayloadFormatVersion": "2.0",
+              "TimeoutInMillis": 30000
+            }
+          },
+          "HttpApiRoutePostProfileUploadDashurl": {
+            "Type": "AWS::ApiGatewayV2::Route",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "RouteKey": "POST /profile/upload-url",
+              "Target": {
+                "Fn::Join": [
+                  "/",
+                  [
+                    "integrations",
+                    {
+                      "Ref": "HttpApiIntegrationGetUploadUrl"
+                    }
+                  ]
+                ]
+              },
+              "AuthorizationType": "JWT",
+              "AuthorizerId": {
+                "Ref": "HttpApiAuthorizerCognitoJwt"
+              }
+            },
+            "DependsOn": "HttpApiIntegrationGetUploadUrl"
+          },
           "UserProfilesTable": {
             "Type": "AWS::DynamoDB::Table",
             "Properties": {
@@ -537,7 +660,7 @@
           "CreateProfileLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateProfileLambdaVersionY8zNZio8ciMIrwsz3xbOIWzI8RwaLMXwyj88yCwYQ8"
+              "Ref": "CreateProfileLambdaVersionL5ocC3bYu95Ck4t4VG7K93szrKPPJjFIjNuRU1jbNyk"
             },
             "Export": {
               "Name": "sls-profileService-dev-CreateProfileLambdaFunctionQualifiedArn"
@@ -546,7 +669,7 @@
           "GetProfileLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetProfileLambdaVersionopzFEvKJisbB63a32ZWJ2oSAZ50lGJ2KlUPxSbHFUQ"
+              "Ref": "GetProfileLambdaVersionHBOyswfJCAGJwLcjPmellOibiSo1oR3N73LcbBizFgw"
             },
             "Export": {
               "Name": "sls-profileService-dev-GetProfileLambdaFunctionQualifiedArn"
@@ -555,10 +678,19 @@
           "UpdateProfileLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "UpdateProfileLambdaVersion6EgROys3PMMA58V0Ut6GhZIy02hY5aWGvbszgw6yznE"
+              "Ref": "UpdateProfileLambdaVersionQL2DvYYBzqmxT600cMvP1eGHSlJ1cT3SDSkqpEXPs"
             },
             "Export": {
               "Name": "sls-profileService-dev-UpdateProfileLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetUploadUrlLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetUploadUrlLambdaVersion2OxbnPEmBAjj0nU8VPtxkIj19b4xcGJS2bY2MkjyRz0"
+            },
+            "Export": {
+              "Name": "sls-profileService-dev-GetUploadUrlLambdaFunctionQualifiedArn"
             }
           },
           "HttpApiId": {
@@ -622,7 +754,7 @@
         "timeout": 6,
         "runtime": "nodejs22.x",
         "vpc": {},
-        "versionLogicalId": "CreateProfileLambdaVersionY8zNZio8ciMIrwsz3xbOIWzI8RwaLMXwyj88yCwYQ8"
+        "versionLogicalId": "CreateProfileLambdaVersionL5ocC3bYu95Ck4t4VG7K93szrKPPJjFIjNuRU1jbNyk"
       },
       "getProfile": {
         "handler": "handlers/profile.get",
@@ -645,7 +777,7 @@
         "timeout": 6,
         "runtime": "nodejs22.x",
         "vpc": {},
-        "versionLogicalId": "GetProfileLambdaVersionopzFEvKJisbB63a32ZWJ2oSAZ50lGJ2KlUPxSbHFUQ"
+        "versionLogicalId": "GetProfileLambdaVersionHBOyswfJCAGJwLcjPmellOibiSo1oR3N73LcbBizFgw"
       },
       "updateProfile": {
         "handler": "handlers/profile.update",
@@ -668,7 +800,33 @@
         "timeout": 6,
         "runtime": "nodejs22.x",
         "vpc": {},
-        "versionLogicalId": "UpdateProfileLambdaVersion6EgROys3PMMA58V0Ut6GhZIy02hY5aWGvbszgw6yznE"
+        "versionLogicalId": "UpdateProfileLambdaVersionQL2DvYYBzqmxT600cMvP1eGHSlJ1cT3SDSkqpEXPs"
+      },
+      "getUploadUrl": {
+        "handler": "handlers/profile.getUploadUrl",
+        "events": [
+          {
+            "httpApi": {
+              "path": "/profile/upload-url",
+              "method": "post",
+              "authorizer": {
+                "name": "cognitoJwt"
+              }
+            },
+            "resolvedMethod": "POST",
+            "resolvedPath": "/profile/upload-url"
+          }
+        ],
+        "environment": {
+          "BUCKET_NAME": "myapp-user-media-eu-north-1"
+        },
+        "name": "profileService-dev-getUploadUrl",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs22.x",
+        "vpc": {},
+        "versionLogicalId": "GetUploadUrlLambdaVersion2OxbnPEmBAjj0nU8VPtxkIj19b4xcGJS2bY2MkjyRz0"
       }
     },
     "resources": {
@@ -717,7 +875,7 @@
     "artifact": "/Users/makzibsanil/Desktop/FlutterProjects/SignupDemo/profileService/.serverless/profileService.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/profileService/dev/1770073491518-2026-02-02T23:04:51.518Z",
+    "artifactDirectoryName": "serverless/profileService/dev/1770834731491-2026-02-11T18:32:11.491Z",
     "artifact": "profileService.zip"
   }
 }

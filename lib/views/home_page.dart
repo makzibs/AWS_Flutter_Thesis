@@ -6,7 +6,7 @@ import 'package:demo_flutter_aws/views/edit_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:image_picker/image_picker.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -24,6 +24,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final String _defaultAvatarUrl =
       'https://p7.hiclipart.com/preview/980/37/223/computer-icons-user-profile-avatar-person-png-clipart.jpg';
+  final _imagePicker = ImagePicker();
+  bool _uploading = false;
 
   String _displayName = 'User';
 
@@ -35,13 +37,19 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _profileBio;
   List<String> _profileHobbies = [];
   String _profilePictureUrl = '';
+  String _profilePictureKey = '';
 
-  final List<String> _uploadedImageUrls = [
-    'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8aHVtYW58ZW58MHx8MHx8&w=1000&q=80',
-    'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-    'https://media.istockphoto.com/id/1386479313/photo/happy-millennial-afro-american-business-woman-posing-isolated-on-white.jpg?s=612x612&w=0&k=20&c=8ssXDNTpOk_adog_20E_lB-vts2vut62KnjsVwFN6kI=',
-    'https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg',
-  ];
+  List<String> _carouselImageUrls = [];
+  List<String> _carouselImageKeys = [];
+
+  ButtonStyle _compactButtonStyle(BuildContext context) {
+    return ElevatedButton.styleFrom(
+      minimumSize: const Size(0, 40),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      textStyle: Theme.of(context).textTheme.labelLarge,
+    );
+  }
 
   @override
   void initState() {
@@ -95,7 +103,15 @@ class _MyHomePageState extends State<MyHomePage> {
               .toList();
 
           _profilePictureUrl = (data['profilePictureUrl'] ?? '').toString();
-
+          _profilePictureKey = (data['profilePictureKey'] ?? '').toString();
+          _carouselImageUrls =
+              (data['carouselImageUrls'] as List<dynamic>? ?? [])
+                  .map((e) => e.toString())
+                  .toList();
+          _carouselImageKeys =
+              (data['carouselImageKeys'] as List<dynamic>? ?? [])
+                  .map((e) => e.toString())
+                  .toList();
           _loading = false;
         });
         return;
@@ -108,6 +124,9 @@ class _MyHomePageState extends State<MyHomePage> {
           _profileBio = null;
           _profileHobbies = [];
           _profilePictureUrl = '';
+          _profilePictureKey = '';
+          _carouselImageUrls = [];
+          _carouselImageKeys = [];
           _loading = false;
         });
         return;
@@ -160,7 +179,8 @@ class _MyHomePageState extends State<MyHomePage> {
         'fullName': _displayName,
         'bio': '',
         'hobbies': [],
-        'profilePictureUrl': '',
+        'profilePictureKey': '',
+        'carouselImageKeys': [],
       }),
     );
 
@@ -174,7 +194,10 @@ class _MyHomePageState extends State<MyHomePage> {
         _profileHobbies = (created['hobbies'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
-        _profilePictureUrl = (created['profilePictureUrl'] ?? '').toString();
+        _profilePictureKey = (created['profilePictureKey'] ?? '').toString();
+        _carouselImageKeys = (created['carouselImageKeys'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
         _loading = false;
       });
 
@@ -229,7 +252,6 @@ class _MyHomePageState extends State<MyHomePage> {
               : _displayName,
           initialBio: _profileBio ?? '',
           initialHobbies: _profileHobbies,
-          initialProfilePictureUrl: _profilePictureUrl,
         ),
       ),
     );
@@ -239,15 +261,137 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<void> _uploadImage({required String type}) async {
+    final idToken = await _secureStorage.read(key: 'idToken');
+    if (idToken == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing token. Please sign in again.')),
+      );
+      return;
+    }
+
+    final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    setState(() => _uploading = true);
+
+    try {
+      final bytes = await picked.readAsBytes();
+      final ext = picked.path.split('.').last.toLowerCase();
+      final contentType = ext == 'png' ? 'image/png' : 'image/jpeg';
+
+      // 1) get presigned PUT url + key
+      final urlRes = await http.post(
+        Uri.parse('$_profileBaseUrl/profile/upload-url'),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'type': type, 'contentType': contentType}),
+      );
+
+      if (urlRes.statusCode != 200) {
+        throw Exception(
+          'upload-url failed: ${urlRes.statusCode} ${urlRes.body}',
+        );
+      }
+
+      final urlData = jsonDecode(urlRes.body) as Map<String, dynamic>;
+      final uploadUrl = urlData['uploadUrl'] as String;
+      final key = urlData['key'] as String;
+      final signedContentType =
+          (urlData['contentType'] as String?) ?? contentType;
+
+      // 2) upload to S3
+      final putRes = await http.put(
+        Uri.parse(uploadUrl),
+        headers: {'Content-Type': signedContentType},
+        body: bytes,
+      );
+
+      if (putRes.statusCode != 200) {
+        throw Exception('S3 PUT failed: ${putRes.statusCode}');
+      }
+
+      // 3) update profile with the KEY (not URL)
+      final Map<String, dynamic> updateBody;
+      if (type == 'avatar') {
+        updateBody = {'profilePictureKey': key};
+      } else {
+        updateBody = {
+          'carouselImageKeys': [..._carouselImageKeys, key],
+        };
+      }
+
+      final profileRes = await http.put(
+        Uri.parse('$_profileBaseUrl/profile'),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(updateBody),
+      );
+
+      if (profileRes.statusCode != 200) {
+        throw Exception(
+          'profile update failed: ${profileRes.statusCode} ${profileRes.body}',
+        );
+      }
+
+      // 4) reload profile to get new signed GET urls
+      await _initHome();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Upload complete')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
   Widget _buildAvatar() {
     final url = _profilePictureUrl.trim().isEmpty
         ? _defaultAvatarUrl
         : _profilePictureUrl.trim();
 
-    return CircleAvatar(
-      radius: 50,
-      backgroundColor: Colors.grey.shade300,
-      backgroundImage: NetworkImage(url),
+    final canUpload = !_uploading && _profileExists;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        GestureDetector(
+          onTap: canUpload ? () => _uploadImage(type: 'avatar') : null,
+          child: CircleAvatar(
+            radius: 50,
+            backgroundColor: Colors.grey.shade300,
+            backgroundImage: NetworkImage(url),
+            child: _uploading ? const CircularProgressIndicator() : null,
+          ),
+        ),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: Material(
+            color: Theme.of(context).colorScheme.primary,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: canUpload ? () => _uploadImage(type: 'avatar') : null,
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.camera_alt, size: 18, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -279,7 +423,12 @@ class _MyHomePageState extends State<MyHomePage> {
             style: const TextStyle(color: Colors.red),
           ),
           const SizedBox(height: 12),
-          ElevatedButton(onPressed: _initHome, child: const Text('Retry')),
+          ElevatedButton.icon(
+            style: _compactButtonStyle(context),
+            onPressed: _initHome,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Retry'),
+          ),
         ],
       );
     }
@@ -322,9 +471,11 @@ class _MyHomePageState extends State<MyHomePage> {
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
+          ElevatedButton.icon(
+            style: _compactButtonStyle(context),
             onPressed: _goToEditProfile,
-            child: const Text('Edit Profile'),
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Edit Profile'),
           ),
         ],
       );
@@ -346,9 +497,11 @@ class _MyHomePageState extends State<MyHomePage> {
           ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
         ),
         const SizedBox(height: 24),
-        ElevatedButton(
+        ElevatedButton.icon(
+          style: _compactButtonStyle(context),
           onPressed: _createProfile,
-          child: const Text('Create Profile'),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Create Profile'),
         ),
       ],
     );
@@ -357,19 +510,19 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-appBar: AppBar(
-  title: const Text('User Profile'),
-  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-  actions: [
-    IconButton(
-      tooltip: 'Sign out',
-      onPressed: () {
-        _authController.signOutUser(context: context);
-      },
-      icon: const Icon(Icons.logout),
-    ),
-  ],
-),
+      appBar: AppBar(
+        title: const Text('User Profile'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () {
+              _authController.signOutUser(context: context);
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -394,7 +547,7 @@ appBar: AppBar(
                 aspectRatio: 16 / 9,
                 viewportFraction: 0.8,
               ),
-              items: _uploadedImageUrls.map((url) {
+              items: _carouselImageUrls.map((url) {
                 return Builder(
                   builder: (BuildContext context) {
                     return Container(
@@ -414,9 +567,13 @@ appBar: AppBar(
               }).toList(),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('Upload New Picture'),
+            ElevatedButton.icon(
+              style: _compactButtonStyle(context),
+              onPressed: (_uploading || !_profileExists)
+                  ? null
+                  : () => _uploadImage(type: 'carousel'),
+              icon: const Icon(Icons.photo_library, size: 18),
+              label: Text(_uploading ? 'Uploading...' : 'Upload Picture'),
             ),
           ],
         ),

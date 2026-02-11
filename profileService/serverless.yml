@@ -22,8 +22,11 @@ provider:
         - dynamodb:PutItem
         - dynamodb:GetItem
         - dynamodb:UpdateItem
+        - s3:PutObject
+        - s3:GetObject
       Resource:
         - !GetAtt UserProfilesTable.Arn
+        - arn:aws:s3:::myapp-user-media-eu-north-1/*
   
 
 resources:
@@ -65,3 +68,13 @@ functions:
           method: put
           authorizer:
             name: cognitoJwt
+  getUploadUrl:
+    handler: handlers/profile.getUploadUrl
+    events:
+      - httpApi:
+          path: /profile/upload-url
+          method: post
+          authorizer:
+            name: cognitoJwt
+    environment:
+      BUCKET_NAME: myapp-user-media-eu-north-1

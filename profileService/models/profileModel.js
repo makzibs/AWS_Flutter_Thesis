@@ -5,25 +5,28 @@ const TABLE_NAME = 'UserProfiles';
 const dynamoClient = new DynamoDBClient({ region: 'eu-north-1' });
 
 class ProfileModel {
-    constructor(userId, fullName, bio, hobbies) {
+    constructor(userId, fullName, bio, hobbies, profilePictureKey, carouselImageKeys) {
         this.userId = userId;
         this.fullName = fullName;
         this.bio = bio || '';
         this.hobbies = hobbies || [];
+        this.profilePictureKey = profilePictureKey || '';
+        this.carouselImageKeys = carouselImageKeys || [];
         this.createdAt = new Date().toISOString();
     }
-
     // Method to create a new profile entry
     async create() {
         const params = {
             TableName: TABLE_NAME,
             Item: marshall({
-              userId: this.userId,
-           fullName: this.fullName,
-          bio: this.bio,
-         hobbies: this.hobbies,
-         createdAt: this.createdAt,
-         }), // The marshall function converts the JS object to DynamoDB format
+                userId: this.userId,
+                fullName: this.fullName,
+                bio: this.bio,
+                hobbies: this.hobbies,
+                profilePictureKey: this.profilePictureKey,
+                carouselImageKeys: this.carouselImageKeys,
+                createdAt: this.createdAt,
+            }), // The marshall function converts the JS object to DynamoDB format
         };
         try {
             await dynamoClient.send(new PutItemCommand(params));

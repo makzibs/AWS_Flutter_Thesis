@@ -10,13 +10,11 @@ class EditProfilePage extends StatefulWidget {
     required this.initialFullName,
     required this.initialBio,
     required this.initialHobbies,
-    required this.initialProfilePictureUrl,
   });
 
   final String initialFullName;
   final String initialBio;
   final List<String> initialHobbies;
-  final String initialProfilePictureUrl;
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -31,7 +29,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late final TextEditingController _nameController;
   late final TextEditingController _bioController;
   late final TextEditingController _hobbiesController;
-  late final TextEditingController _profilePictureUrlController;
 
   bool _saving = false;
   String? _error;
@@ -44,12 +41,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _bioController = TextEditingController(text: widget.initialBio);
     _hobbiesController =
         TextEditingController(text: widget.initialHobbies.join(', '));
-    _profilePictureUrlController =
-        TextEditingController(text: widget.initialProfilePictureUrl);
-
-    _profilePictureUrlController.addListener(() {
-      if (mounted) setState(() {});
-    });
   }
 
   @override
@@ -57,7 +48,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController.dispose();
     _bioController.dispose();
     _hobbiesController.dispose();
-    _profilePictureUrlController.dispose();
+
     super.dispose();
   }
 
@@ -84,7 +75,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final fullName = _nameController.text.trim();
     final bio = _bioController.text.trim();
     final hobbies = _parseHobbies(_hobbiesController.text);
-    final profilePictureUrl = _profilePictureUrlController.text.trim();
 
     final res = await http.put(
       Uri.parse('$_profileBaseUrl/profile'),
@@ -96,7 +86,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         'fullName': fullName,
         'bio': bio,
         'hobbies': hobbies,
-        'profilePictureUrl': profilePictureUrl,
       }),
     );
 
@@ -184,9 +173,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final avatarUrl = _profilePictureUrlController.text.trim();
-    final hasAvatar = avatarUrl.isNotEmpty;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
@@ -219,14 +205,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ],
             Column(
               children: [
-                CircleAvatar(
-                  radius: 42,
-                  backgroundColor: Colors.grey.shade300,
-                  backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
-                  child: !hasAvatar
-                      ? const Icon(Icons.person, size: 40, color: Colors.white)
-                      : null,
-                ),
                 const SizedBox(height: 12),
                 Text(
                   _nameController.text.trim().isEmpty
@@ -268,22 +246,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 _navRow(
                   title: 'Hobbies',
-                  
                   value: _hobbiesController.text,
                   onTap: () => _editField(
                     title: 'Hobbies',
                     controller: _hobbiesController,
                     hintText: 'Film, music, gym...',
-                    maxLines: 2,
-                  ),
-                ),
-                _navRow(
-                  title: 'Profile picture URL',
-                  value: _profilePictureUrlController.text,
-                  onTap: () => _editField(
-                    title: 'Profile picture URL',
-                    controller: _profilePictureUrlController,
-                    hintText: 'https://...',
                     maxLines: 2,
                   ),
                   showDivider: false,
