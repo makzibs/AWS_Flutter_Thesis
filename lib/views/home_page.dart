@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:demo_flutter_aws/controllers/auth_controller.dart';
 import 'package:demo_flutter_aws/views/edit_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -14,6 +16,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final AuthController _authController = AuthController();
   static const _profileBaseUrl =
       'https://bj48gy3srd.execute-api.eu-north-1.amazonaws.com';
 
@@ -354,10 +357,19 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Profile'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+appBar: AppBar(
+  title: const Text('User Profile'),
+  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+  actions: [
+    IconButton(
+      tooltip: 'Sign out',
+      onPressed: () {
+        _authController.signOutUser(context: context);
+      },
+      icon: const Icon(Icons.logout),
+    ),
+  ],
+),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

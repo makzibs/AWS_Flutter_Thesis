@@ -21,7 +21,9 @@ class AuthController {
     try {
       User user = User(email: email, fullName: fullName, password: password);
       http.Response response = await http.post(
-        Uri.parse('https://oyxr8n67xk.execute-api.eu-north-1.amazonaws.com/sign-up'),
+        Uri.parse(
+          'https://oyxr8n67xk.execute-api.eu-north-1.amazonaws.com/sign-up',
+        ),
         body: user.toJson(),
         headers: <String, String>{
           "Content-Type": "application/json; charset=UTF-8",
@@ -53,8 +55,10 @@ class AuthController {
     required context,
   }) async {
     try {
-      ConfirmUser confirmUser =
-          ConfirmUser(email: email, confirmationCode: confirmationCode);
+      ConfirmUser confirmUser = ConfirmUser(
+        email: email,
+        confirmationCode: confirmationCode,
+      );
 
       http.Response response = await http.post(
         Uri.parse(
@@ -81,15 +85,13 @@ class AuthController {
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error['details'] ?? 'Verification failed'),
-          ),
+          SnackBar(content: Text(error['details'] ?? 'Verification failed')),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -102,7 +104,9 @@ class AuthController {
       SignInUser signInUser = SignInUser(email: email, password: password);
 
       http.Response response = await http.post(
-        Uri.parse('https://oyxr8n67xk.execute-api.eu-north-1.amazonaws.com/sign-in'),
+        Uri.parse(
+          'https://oyxr8n67xk.execute-api.eu-north-1.amazonaws.com/sign-in',
+        ),
         body: signInUser.toJson(),
         headers: <String, String>{
           "Content-Type": "application/json; charset=UTF-8",
@@ -115,7 +119,9 @@ class AuthController {
 
         if (tokens == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sign-in succeeded but tokens missing')),
+            const SnackBar(
+              content: Text('Sign-in succeeded but tokens missing'),
+            ),
           );
           return;
         }
@@ -137,13 +143,13 @@ class AuthController {
           await _secureStorage.write(key: 'refreshToken', value: refreshToken);
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signed in successfully')),
-        );
-
-        await Navigator.push(
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Signed in successfully')));
+        await Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const MyHomePage()),
+          (route) => false,
         );
       } else {
         final error = jsonDecode(response.body);
@@ -152,8 +158,42 @@ class AuthController {
         );
       }
     } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> signOutUser({required BuildContext context}) async {
+    String? accessToken;
+    try {
+      accessToken = await _secureStorage.read(key: 'accessToken');
+
+      if (accessToken != null) {
+        await http.post(
+          Uri.parse(
+            'https://oyxr8n67xk.execute-api.eu-north-1.amazonaws.com/sign-out',
+          ),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({'accessToken': accessToken}),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text('Sign out failed: ${e.toString()}')),
+      );
+    } finally {
+      await _secureStorage.delete(key: 'idToken');
+      await _secureStorage.delete(key: 'accessToken');
+      await _secureStorage.delete(key: 'refreshToken');
+
+      if (!context.mounted) return;
+      await Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const SignInPage()),
+        (route) => false,
       );
     }
   }
